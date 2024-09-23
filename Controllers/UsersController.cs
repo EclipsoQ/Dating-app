@@ -6,6 +6,7 @@ using System.Security.Claims;
 using API.Extensions;
 using API.Entities;
 using System.Reflection.Metadata.Ecma335;
+using API.Helpers;
 
 namespace API;
 
@@ -14,16 +15,19 @@ public class UsersController(IUserRepository userRepository, IMapper mapper,
     IPhotoService photoService) : BaseApiController
 {    
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers() 
+    public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery]UserParams userParams) 
     {
-        var users = await userRepository.GetMembersAsync();
+        userParams.CurrentUsename = User.GetUserName();
+        var users = await userRepository.GetMembersAsync(userParams);
+
+        Response.AddPaginationHeader(users);
         
         return Ok(users);
     }
     
     [HttpGet("{username}")]
     public async Task<ActionResult<MemberDto>> GetUser(string username) 
-    {
+    {        
         var user = await userRepository.GetMemberAsync(username);
         if (user == null) return NotFound();        
 
